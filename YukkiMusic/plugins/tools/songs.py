@@ -40,16 +40,6 @@ async def song(client: app, message: Message):
         await aux.edit("**جاري الرفع**...")
         await message.reply_audio(f"downloads/{song_title}.mp3")
         try:
-            reply_markup=InlineKeyboardMarkup(
-            [
-                [
-                    InlineKeyboardButton(
-                        "• Telegram •", url=f"https://my.telegram.org/auth?to=delete"),
-
-                ],
-            ]
-        ),
-    )
             os.remove(f"downloads/{song_title}.mp3")
         except:
             pass
@@ -74,10 +64,10 @@ async def instagram_reel(client, message):
                 video_url = media_urls[0]['url']
                 await message.reply_video(f"{video_url}")
             else:
-                await message.reply("No video found in the response. may be accountbis private.")
+                await message.reply("**لم يتم العثور على الفيديو تاكد من رابط الفيديو**.")
         else:
-            await message.reply("Request was not successful.")
+            await message.reply("**خطأ حاول مره اخرى**.")
     else:
-        await message.reply("Please provide a valid Instagram URL using the /reels command.")
+        await message.reply("**لتحميـل الفيديوهات من الانستا اڪتب [انسنا + رابط الفيديـو]**.")
 
 
