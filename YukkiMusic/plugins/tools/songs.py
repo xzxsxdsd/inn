@@ -48,26 +48,3 @@ async def song(client: app, message: Message):
         await aux.edit(f"**حدث خطأ أثناء البحث حاول مره اخرى**: {e}")
 
 
-###### INSTAGRAM REELS DOWNLOAD
-
-
-@app.on_message(filters.command(["انستا"],""))
-async def instagram_reel(client, message):
-    if len(message.command) == 2:
-        url = message.command[1]
-        response = requests.post(f"https://lexica-api.vercel.app/download/instagram?url={url}")
-        data = response.json()
-
-        if data['code'] == 2:
-            media_urls = data['content']['mediaUrls']
-            if media_urls:
-                video_url = media_urls[0]['url']
-                await message.reply_video(f"{video_url}")
-            else:
-                await message.reply("**لم يتم العثور على الفيديو تاكد من رابط الفيديو**.")
-        else:
-            await message.reply("**خطأ حاول مره اخرى**.")
-    else:
-        await message.reply("**لتحميـل الفيديوهات من الانستا اڪتب [انسنا + رابط الفيديـو]**.")
-
-
