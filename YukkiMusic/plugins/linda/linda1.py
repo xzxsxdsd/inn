@@ -58,7 +58,6 @@ async def ytmusic(client, message: Message):
     kekme = f"https://img.youtube.com/vi/{fridayz}/hqdefault.jpg"
     await asyncio.sleep(0.6)
     url = mo
-    sedlyf = wget.download(kekme)
     opts = {
         "format": "best",
         "addmetadata": True,
