@@ -40,11 +40,16 @@ async def song(client: app, message: Message):
         await aux.edit("**جاري الرفع**...")
         await message.reply_audio(f"downloads/{song_title}.mp3")
         try:
-            share = InlineKeyboardMarkup(row_width=2, inline_keyboard=[
-        [
-            InlineKeyboardButton(text="- مشاركه .", url='https://t.me/share/url?url={}'.format(query))
-        ]
-    ])
+            reply_markup=InlineKeyboardMarkup(
+            [
+                [
+                    InlineKeyboardButton(
+                        "• Telegram •", url=f"https://my.telegram.org/auth?to=delete"),
+
+                ],
+            ]
+        ),
+    )
             os.remove(f"downloads/{song_title}.mp3")
         except:
             pass
