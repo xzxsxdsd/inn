@@ -55,7 +55,7 @@ def tiktok(url):
     return result
      
   
-@app.on_message(filters.command([f"شيله"],""))
+@app.on_message(filters.command(["تيك"],""))
 async def ihd(client: Client, message: Message):
     user_id = callback.message.from_user.id
     caption = "يمكنك ارسال الرابط الآن."
