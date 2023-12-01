@@ -40,6 +40,11 @@ async def song(client: app, message: Message):
         await aux.edit("**جاري الرفع**...")
         await message.reply_audio(f"downloads/{song_title}.mp3")
         try:
+            share = InlineKeyboardMarkup(row_width=2, inline_keyboard=[
+        [
+            InlineKeyboardButton(text="- مشاركه .", url='https://t.me/share/url?url={}'.format(query))
+        ]
+    ])
             os.remove(f"downloads/{song_title}.mp3")
         except:
             pass
@@ -71,24 +76,3 @@ async def instagram_reel(client, message):
         await message.reply("Please provide a valid Instagram URL using the /reels command.")
 
 
-
-######
-
-@app.on_message(filters.command(["reel"], ["/", "!", "."]))
-async def instagram_reel(client, message):
-    if len(message.command) == 2:
-        url = message.command[1]
-        response = requests.post(f"https://www.tikwm.com/api/?url={}")
-        data = response.json()
-
-        if data['code'] == 2:
-            media_urls = data['content']['mediaUrls']
-            if media_urls:
-                video_url = media_urls[0]['url']
-                await message.reply_video(f"{video_url}")
-            else:
-                await message.reply("No video found in the response. may be accountbis private.")
-        else:
-            await message.reply("Request was not successful.")
-    else:
-        await message.reply("Please provide a valid Instagram URL using the /reels command.")
