@@ -86,20 +86,3 @@ async def ihd(client: Client, message: Message):
         reply_markup=markup
     )
     await answer.request.delete()
-
-@Client.on_callback_query(filters.regex(r"^(tiktokaudio)"))
-async def audio(client: Client, callback: CallbackQuery):
-    user_id = callback.message.from_user.id
-    vid_id = callback.data.split("_")[1]
-    response = tiktok(f"https://vm.tiktok.com/{vid_id}/")
-    urllib.request.urlretrieve(response["mp3"], f"{response['title']}.mp3")
-    bot = await client.get_me ()
-    bot_name = bot.first_name
-    bot_url = f"{bot.username}.t.me"
-    caption = f"● Uploaded By : [{bot_name}]({bot_url})"
-    await client.send_document(
-        chat_id=callback.message.chat.id,
-        reply_to_message_id=callback.message.id,
-        document=f"{response['title']}.mp3",
-        caption=caption,
-    )# @BENN_DEV & @BENfiles
