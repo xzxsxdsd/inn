@@ -1,88 +1,111 @@
+import future
+
+import asyncio
 import os
-import random
-import requests
-from datetime import datetime
-from sys import version_info
-from time import time
-from pyrogram import Client, filters
-from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
+import time
+from urllib.parse import urlparse
+
+import wget
+from pyrogram import filters
+from pyrogram.types import Message
+from youtubesearchpython import SearchVideos
+from yt_dlp import YoutubeDL
+
 from YukkiMusic import app
-from YukkiMusic.utils.decorators.admins import AdminActual
-from strings import get_command
 
 
+def get_file_extension_from_url(url):
+    url_path = urlparse(url).path
+    basename = os.path.basename(url_path)
+    return basename.split(".")[-1]
 
 
-def tiktok(url):
-    headers = {
-        'authority': 'ssstik.io',
-        'accept': '*/*',
-        'accept-language': 'ar-EG,ar;q=0.9,en-US;q=0.8,en;q=0.7',
-        'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
-        'hx-current-url': 'https://ssstik.io/en',
-        'hx-request': 'true',
-        'hx-target': 'target',
-        'hx-trigger': '_gcaptcha_pt',
-        'origin': 'https://ssstik.io',
-        'referer': 'https://ssstik.io/en',
-        'sec-ch-ua': '"Chromium";v="105", "Not)A;Brand";v="8"',
-        'sec-ch-ua-mobile': '?1',
-        'sec-ch-ua-platform': '"Android"',
-        'sec-fetch-dest': 'empty',
-        'sec-fetch-mode': 'cors',
-        'sec-fetch-site': 'same-origin',# @BENN_DEV & @BENfiles
-        'user-agent': 'Mozilla/5.0 (Linux; Android 12; M2004J19C) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Mobile Safari/537.36',
-    }
-    
-    data = {
-    	'id': url,
-    	'locale': 'en',
-    	'tt': 'VG5CYm1h',
-	}
-  
-    response = requests.post('https://ssstik.io/abc', headers=headers, data=data).text
-    try:
-        title = response.split('"maintext">', 1)[1].split("<", 1)[0]
-    except IndexError:
-        return { "success" : False }
-    urls = response.split('<div class="flex-1 result_overlay_buttons pure-u-1 pure-u-sm-1-2">')[1]
-    a_voice = urls.split('<a href="')[2]
-    voice = a_voice.split('"')[0]
-    a_video = urls.split('<a href="')[1]
-    video = a_video.split('"')[0]
-    result = {"mp4" : video, "mp3" : voice, "title" : title, "id" : url.rsplit("/", 1)[0], "success": True}
-    
-    return result
-     
-  
-@app.on_message(filters.command(["تيك"],""))
-async def ihd(client: Client, message: Message):
-    user_id = callback.message.from_user.id
-    caption = "يمكنك ارسال الرابط الآن."
-    answer = await callback.message.chat.ask(text=caption)
-    await client.delete_messages(user_id, answer.id)
-    await answer.request.edit_text("Processing...")
-    url = answer.text
-    response = tiktok(url)
-    if not response["success"] :
-        await answer.request.delete()
-        await answer.reply(
-            "الرابط غير صالح",
+def get_text(message: Message) -> [None, str]:
+    """Extract Text From Commands"""
+    text_to_return = message.text
+    if message.text is None:
+        return None
+    if " " in text_to_return:
+        try:
+            return message.text.split(None, 1)[1]
+        except IndexError:
+            return None
+    else:
+        return None
+
+
+@app.on_message(filters.command(["yt", "video"]))
+async def ytmusic(client, message: Message):
+    urlissed = get_text(message)
+    await message.delete()
+    user_id = message.from_user.id
+    user_name = message.from_user.first_name
+    chutiya = "[" + user_name + "](tg://user?id=" + str(user_id) + ")"
+
+    pablo = await client.send_message(message.chat.id, f"sᴇᴀʀᴄʜɪɴɢ, ᴩʟᴇᴀsᴇ ᴡᴀɪᴛ...")
+    if not urlissed:
+        await pablo.edit(
+            "😴 sᴏɴɢ ɴᴏᴛ ғᴏᴜɴᴅ ᴏɴ ʏᴏᴜᴛᴜʙᴇ.\n\n» ᴍᴀʏʙᴇ ᴛᴜɴᴇ ɢᴀʟᴛɪ ʟɪᴋʜᴀ ʜᴏ, ᴩᴀᴅʜᴀɪ - ʟɪᴋʜᴀɪ ᴛᴏʜ ᴋᴀʀᴛᴀ ɴᴀʜɪ ᴛᴜ !"
         )
-        return # @BENN_DEV & @BENfiles
-    urllib.request.urlretrieve(response["mp4"], f"{response['title']}.mp4")
-    bot = await client.get_me ()
-    bot_name = bot.first_name
-    bot_url = f"{bot.username}.t.me"
-    markup = Keyboard([
-        [
-            Button("- تحميل الصوت-", callback_data=f"tiktokaudio_{response['id']}")
-        ]
-    ])
-    caption = f"title : {response['title']}\n\n● Uploaded By : [{bot_name}]({bot_url})"
-    await answer.reply_document(
-        document=f"{response['title']}.mp4", 
-        caption=caption,
-        reply_markup=markup
+        return
+
+    search = SearchVideos(f"{urlissed}", offset=1, mode="dict", max_results=1)
+    mi = search.result()
+    mio = mi["search_result"]
+    mo = mio[0]["link"]
+    thum = mio[0]["title"]
+    fridayz = mio[0]["id"]
+    thums = mio[0]["channel"]
+    kekme = f"https://img.youtube.com/vi/{fridayz}/hqdefault.jpg"
+    await asyncio.sleep(0.6)
+    url = mo
+    sedlyf = wget.download(kekme)
+    opts = {
+        "format": "best",
+        "addmetadata": True,
+        "key": "FFmpegMetadata",
+        "prefer_ffmpeg": True,
+        "geo_bypass": True,
+        "nocheckcertificate": True,
+        "postprocessors": [{"key": "FFmpegVideoConvertor", "preferedformat": "mp4"}],
+        "outtmpl": "%(id)s.mp4",
+        "logtostderr": False,
+        "quiet": True,
+    }
+    try:
+        with YoutubeDL(opts) as ytdl:
+            infoo = ytdl.extract_info(url, False)
+            round(infoo["duration"] / 60)
+            ytdl_data = ytdl.extract_info(url, download=True)
+
+    except Exception as e:
+        await pablo.edit(f"ғᴀɪʟᴇᴅ ᴛᴏ ᴅᴏᴡɴʟᴏᴀᴅ. \nᴇʀʀᴏʀ : `{str(e)}`")
+        return
+    c_time = time.time()
+    file_stark = f"{ytdl_data['id']}.mp4"
+    capy = f"❄ ᴛɪᴛʟᴇ : [{thum}]({mo})\n💫 ᴄʜᴀɴɴᴇʟ : {thums}\n✨ sᴇᴀʀᴄʜᴇᴅ : {urlissed}\n🥀 ʀᴇǫᴜᴇsᴛᴇᴅ ʙʏ : {chutiya}"
+    await client.send_video(
+        message.chat.id,
+        video=open(file_stark, "rb"),
+        duration=int(ytdl_data["duration"]),
+        file_name=str(ytdl_data["title"]),
+        thumb=sedlyf,
+        caption=capy,
+        supports_streaming=True,
+        progress_args=(
+            pablo,
+            c_time,
+            f"» ᴩʟᴇᴀsᴇ ᴡᴀɪᴛ...\n\nᴜᴩʟᴏᴀᴅɪɴɢ `{urlissed}` ғʀᴏᴍ ʏᴏᴜᴛᴜʙᴇ sᴇʀᴠᴇʀs...💫",
+            file_stark,
+        ),
     )
-    await answer.request.delete()
+    await pablo.delete()
+    for files in (sedlyf, file_stark):
+        if files and os.path.exists(files):
+            os.remove(files)
+
+
+__mod_name__ = "Vɪᴅᴇᴏ"
+__help__ = """ 
+/video to download video song
+/vsong to download video song """
