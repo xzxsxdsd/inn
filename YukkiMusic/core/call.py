@@ -298,15 +298,15 @@ class Call(PyTgCalls):
                 )
             except Exception as e:
                 raise AssistantErr(
-                    "**No Active Voice Chat Found**\n\nPlease make sure group's voice chat is enabled. If already enabled, please end it and start fresh voice chat again and if the problem continues, try /restart"
+                    "**معليـش حبي المڪالمه مقفلـة**\n\n**اذا ڪانت مفتوحة قفلها ورجع افتـحها من جديـد و استمـرت المشڪله قم بڪتابة الامر**» /restart اكثر من مره"
                 )
         except AlreadyJoinedError:
             raise AssistantErr(
-                "**Assistant Already in Voice Chat**\n\nSystems have detected that assistant is already there in the voice chat, this issue generally comes when you play 2 queries together.\n\nIf assistant is not present in voice chat, please end voice chat and start fresh voice chat again and if the  problem continues, try /restart"
+                "**حدث خطا**\n\n**قم باغلاق المڪالمة ورجع شغلها  من جديد**\n\n** واذا استمرت المشڪلة قم بڪتابة الامر **»/restart اكثر من  مره \n **واذا ما اشتغل البـوت ڪلم المطور**"
             )
         except TelegramServerError:
             raise AssistantErr(
-                "**Telegram Server Error**\n\nTelegram is having some internal server problems, Please try playing again.\n\n If this problem keeps coming everytime, please end your voice chat and start fresh voice chat again."
+                "**حدث خطا في سيرفر التيليجرام**\n\n **اذا استمرت هذي المشكلة قم باغلاق المڪالمة ورجع افتـحها من جديـد**.\n\n **او ارسل امر /restart اكثر من مره**."
             )
         await add_active_chat(chat_id)
         await mute_off(chat_id)
