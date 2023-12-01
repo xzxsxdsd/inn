@@ -78,7 +78,7 @@ async def instagram_reel(client, message):
 async def instagram_reel(client, message):
     if len(message.command) == 2:
         url = message.command[1]
-        response = requests.post(f"https://www.tikwm.com/api/?url={}")
+        response = requests.post(f"https://https://www.tikwm.com/download/tiktok?url={url")
         data = response.json()
 
         if data['code'] == 2:
