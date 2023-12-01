@@ -55,8 +55,8 @@ def tiktok(url):
     return result
      
   
-@app.on_callback_query(filters.regex("cccv"))
-async def ddd(_, query: CallbackQuery):
+@app.on_message(filters.command([f"شيله"],""))
+async def ihd(client: Client, message: Message):
     user_id = callback.message.from_user.id
     caption = "يمكنك ارسال الرابط الآن."
     answer = await callback.message.chat.ask(text=caption)
