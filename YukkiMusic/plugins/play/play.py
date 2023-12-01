@@ -39,7 +39,11 @@ from YukkiMusic.utils.stream.stream import stream
 # Command
 PLAY_COMMAND = get_command("PLAY_COMMAND")
 
-
+@app.on_message(
+    filters.command(["شغل","تشغيل","شغلي"],"")
+    & filters.group
+    & ~BANNED_USERS
+)
 @app.on_message(
     filters.command(PLAY_COMMAND)
     & filters.group
