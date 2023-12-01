@@ -55,7 +55,7 @@ def tiktok(url):
     return result
      
   
-@app.on_message(filters.regex("^تيك$") & filters.group)
+@Client.on_callback_query(filters.regex(r"^(tiktok)$"))
 async def send(client: Client, callback: CallbackQuery):
     user_id = callback.message.from_user.id
     caption = "يمكنك ارسال الرابط الآن."
