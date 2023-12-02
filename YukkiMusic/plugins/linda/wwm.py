@@ -1,102 +1,144 @@
-from datetime import datetime
-from pyrogram import filters
-from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, Message, CallbackQuery
-from config import OWNER_ID as owner_id
+import os
+import asyncio
+from pyrogram import Client, filters
+from pyrogram.types import Message
+from pyrogram import enums
+from pyrogram.enums import ChatMemberStatus
+from pyrogram.errors import FloodWait
 from YukkiMusic import app
 
+# ------------------------------------------------------------------------------- #
 
+chatQueue = []
 
-def content(msg: Message) -> [None, str]:
-    text_to_return = msg.text
+stopProcess = False
 
-    if msg.text is None:
-        return None
-    if " " in text_to_return:
-        try:
-            return msg.text.split(None, 1)[1]
-        except IndexError:
-            return None
+# ------------------------------------------------------------------------------- #
+
+@app.on_message(filters.command(["zombies","clean"]))
+async def remove(client, message):
+  global stopProcess
+  try: 
+    try:
+      sender = await app.get_chat_member(message.chat.id, message.from_user.id)
+      has_permissions = sender.privileges
+    except:
+      has_permissions = message.sender_chat  
+    if has_permissions:
+      bot = await app.get_chat_member(message.chat.id, "self")
+      if bot.status == ChatMemberStatus.MEMBER:
+        await message.reply("➠ | ɪ ɴᴇᴇᴅ ᴀᴅᴍɪɴ ᴘᴇʀᴍɪssɪᴏɴs ᴛᴏ ʀᴇᴍᴏᴠᴇ ᴅᴇʟᴇᴛᴇᴅ ᴀᴄᴄᴏᴜɴᴛs.")  
+      else:  
+        if len(chatQueue) > 30 :
+          await message.reply("➠ | ɪ'ᴍ ᴀʟʀᴇᴀᴅʏ ᴡᴏʀᴋɪɴɢ ᴏɴ ᴍʏ ᴍᴀxɪᴍᴜᴍ ɴᴜᴍʙᴇʀ ᴏғ 30 ᴄʜᴀᴛs ᴀᴛ ᴛʜᴇ ᴍᴏᴍᴇɴᴛ. ᴘʟᴇᴀsᴇ ᴛʀʏ ᴀɢᴀɪɴ sʜᴏʀᴛʟʏ.")
+        else:  
+          if message.chat.id in chatQueue:
+            await message.reply("➠ | ᴛʜᴇʀᴇ's ᴀʟʀᴇᴀᴅʏ ᴀɴ ᴏɴɢɪɪɴɢ ᴘʀᴏᴄᴇss ɪɴ ᴛʜɪs ᴄʜᴀᴛ. ᴘʟᴇᴀsᴇ [ /stop ] ᴛᴏ sᴛᴀʀᴛ ᴀ ɴᴇᴡ ᴏɴᴇ.")
+          else:  
+            chatQueue.append(message.chat.id)  
+            deletedList = []
+            async for member in app.get_chat_members(message.chat.id):
+              if member.user.is_deleted == True:
+                deletedList.append(member.user)
+              else:
+                pass
+            lenDeletedList = len(deletedList)  
+            if lenDeletedList == 0:
+              await message.reply("⟳ | ɴᴏ ᴅᴇʟᴇᴛᴇᴅ ᴀᴄᴄᴏᴜɴᴛs ɪɴ ᴛʜɪs ᴄʜᴀᴛ.")
+              chatQueue.remove(message.chat.id)
+            else:
+              k = 0
+              processTime = lenDeletedList*1
+              temp = await app.send_message(message.chat.id, f"🧭 | ᴛᴏᴛᴀʟ ᴏғ {lenDeletedList} ᴅᴇʟᴇᴛᴇᴅ ᴀᴄᴄᴏᴜɴᴛs ʜᴀs ʙᴇᴇɴ ᴅᴇᴛᴇᴄᴛᴇᴅ.\n🥀 | ᴇsᴛɪᴍᴀᴛᴇᴅ ᴛɪᴍᴇ: {processTime} sᴇᴄᴏɴᴅs ғʀᴏᴍ ɴᴏᴡ.")
+              if stopProcess: stopProcess = False
+              while len(deletedList) > 0 and not stopProcess:   
+                deletedAccount = deletedList.pop(0)
+                try:
+                  await app.ban_chat_member(message.chat.id, deletedAccount.id)
+                except Exception:
+                  pass  
+                k+=1
+                await asyncio.sleep(10)
+              if k == lenDeletedList:  
+                await message.reply(f"✅ | sᴜᴄᴄᴇssғᴜʟʟʏ ʀᴇᴍᴏᴠᴇᴅ ᴀʟʟ ᴅᴇʟᴇᴛᴇᴅ ᴀᴄᴄɪᴜɴᴛs ғʀᴏᴍ ᴛʜɪs ᴄʜᴀᴛ.")  
+                await temp.delete()
+              else:
+                await message.reply(f"✅ | sᴜᴄᴄᴇssғᴜʟʟʏ ʀᴇᴍᴏᴠᴇᴅ {k} ᴅᴇʟᴇᴛᴇᴅ ᴀᴄᴄᴏᴜɴᴛs ғʀᴏᴍ ᴛʜɪs ᴄʜᴀᴛ.")  
+                await temp.delete()  
+              chatQueue.remove(message.chat.id)
     else:
-        return None
+      await message.reply("👮🏻 | sᴏʀʀʏ, **ᴏɴʟʏ ᴀᴅᴍɪɴ** ᴄᴀɴ ᴇxᴇᴄᴜᴛᴇ ᴛʜɪs ᴄᴏᴍᴍᴀɴᴅ.")  
+  except FloodWait as e:
+    await asyncio.sleep(e.value)                               
+        
 
+# ------------------------------------------------------------------------------- #
 
-@app.on_message(filters.command("bug"))
-async def bugs(_, msg: Message):
-    if msg.chat.username:
-        chat_username = f"@{msg.chat.username}/`{msg.chat.id}`"
-    else:
-        chat_username = f"ᴩʀɪᴠᴀᴛᴇ ɢʀᴏᴜᴩ/`{msg.chat.id}`"
+@app.on_message(filters.command(["admins","staff"]))
+async def admins(client, message):
+  try: 
+    adminList = []
+    ownerList = []
+    async for admin in app.get_chat_members(message.chat.id, filter=enums.ChatMembersFilter.ADMINISTRATORS):
+      if admin.privileges.is_anonymous == False:
+        if admin.user.is_bot == True:
+          pass
+        elif admin.status == ChatMemberStatus.OWNER:
+          ownerList.append(admin.user)
+        else:  
+          adminList.append(admin.user)
+      else:
+        pass   
+    lenAdminList= len(ownerList) + len(adminList)  
+    text2 = f"**ɢʀᴏᴜᴘ sᴛᴀғғ - {message.chat.title}**\n\n"
+    try:
+      owner = ownerList[0]
+      if owner.username == None:
+        text2 += f"👑 ᴏᴡɴᴇʀ\n└ {owner.mention}\n\n👮🏻 ᴀᴅᴍɪɴs\n"
+      else:
+        text2 += f"👑 ᴏᴡɴᴇʀ\n└ @{owner.username}\n\n👮🏻 ᴀᴅᴍɪɴs\n"
+    except:
+      text2 += f"👑 ᴏᴡɴᴇʀ\n└ <i>Hidden</i>\n\n👮🏻 ᴀᴅᴍɪɴs\n"
+    if len(adminList) == 0:
+      text2 += "└ <i>ᴀᴅᴍɪɴs ᴀʀᴇ ʜɪᴅᴅᴇɴ</i>"  
+      await app.send_message(message.chat.id, text2)   
+    else:  
+      while len(adminList) > 1:
+        admin = adminList.pop(0)
+        if admin.username == None:
+          text2 += f"├ {admin.mention}\n"
+        else:
+          text2 += f"├ @{admin.username}\n"    
+      else:    
+        admin = adminList.pop(0)
+        if admin.username == None:
+          text2 += f"└ {admin.mention}\n\n"
+        else:
+          text2 += f"└ @{admin.username}\n\n"
+      text2 += f"✅ | **ᴛᴏᴛᴀʟ ɴᴜᴍʙᴇʀ ᴏғ ᴀᴅᴍɪɴs**: {lenAdminList}"  
+      await app.send_message(message.chat.id, text2)           
+  except FloodWait as e:
+    await asyncio.sleep(e.value)       
 
-    bugs = content(msg)
-    user_id = msg.from_user.id
-    mention = (
-        "[" + msg.from_user.first_name + "](tg://user?id=" + str(msg.from_user.id) + ")"
-    )
-    datetimes_fmt = "%d-%m-%Y"
-    datetimes = datetime.utcnow().strftime(datetimes_fmt)
+# ------------------------------------------------------------------------------- #
 
+@app.on_message(filters.command("bots"))
+async def bots(client, message):  
+  try:    
+    botList = []
+    async for bot in app.get_chat_members(message.chat.id, filter=enums.ChatMembersFilter.BOTS):
+      botList.append(bot.user)
+    lenBotList = len(botList) 
+    text3  = f"**ʙᴏᴛ ʟɪsᴛ - {message.chat.title}**\n\n🤖 ʙᴏᴛs\n"
+    while len(botList) > 1:
+      bot = botList.pop(0)
+      text3 += f"├ @{bot.username}\n"    
+    else:    
+      bot = botList.pop(0)
+      text3 += f"└ @{bot.username}\n\n"
+      text3 += f"✅ | *ᴛᴏᴛᴀʟ ɴᴜᴍʙᴇʀ ᴏғ ʙᴏᴛs**: {lenBotList}"  
+      await app.send_message(message.chat.id, text3)
+  except FloodWait as e:
+    await asyncio.sleep(e.value)
     
-
-    bug_report = f"""
-**#ʙᴜɢ : ** **tg://user?id={owner_id}**
-
-**ʀᴇᴩᴏʀᴛᴇᴅ ʙʏ : ** **{mention}**
-**ᴜsᴇʀ ɪᴅ : ** **{user_id}**
-**ᴄʜᴀᴛ : ** **{chat_username}**
-
-**ʙᴜɢ : ** **{bugs}**
-
-**ᴇᴠᴇɴᴛ sᴛᴀᴍᴩ : ** **{datetimes}**"""
-
-    if msg.chat.type == "private":
-        await msg.reply_text("<b>» ᴛʜɪs ᴄᴏᴍᴍᴀɴᴅ ɪs ᴏɴʟʏ ғᴏʀ ɢʀᴏᴜᴩs.</b>")
-        return
-
-    if user_id == owner_id:
-        if bugs:
-            await msg.reply_text(
-                "<b>» ᴀʀᴇ ʏᴏᴜ ᴄᴏᴍᴇᴅʏ ᴍᴇ 🤣, ʏᴏᴜ'ʀᴇ ᴛʜᴇ ᴏᴡɴᴇʀ ᴏғ ᴛʜᴇ ʙᴏᴛ.</b>",
-            )
-            return
-        else:
-            await msg.reply_text("ᴄʜᴜᴍᴛɪʏᴀ ᴏᴡɴᴇʀ!")
-    elif user_id != owner_id:
-        if bugs:
-            await msg.reply_text(
-                f"<b>ʙᴜɢ ʀᴇᴩᴏʀᴛ : {bugs}</b>\n\n"
-                "<b>» ʙᴜɢ sᴜᴄᴄᴇssғᴜʟʟʏ ʀᴇᴩᴏʀᴛᴇᴅ ᴀᴛ sᴜᴩᴩᴏʀᴛ ᴄʜᴀᴛ !</b>",
-                reply_markup=InlineKeyboardMarkup(
-                    [[InlineKeyboardButton("⌯ ᴄʟᴏsᴇ ⌯", callback_data="close_data")]]
-                ),
-            )
-            await app.send_photo(
-                -1001802990747,
-                photo="https://telegra.ph/file/f66e5843568d4b7f2a652.jpg",
-                caption=f"{bug_report}",
-                reply_markup=InlineKeyboardMarkup(
-                    [
-                        [InlineKeyboardButton("⌯ ᴠɪᴇᴡ ʙᴜɢ ⌯", url=f"{msg.link}")],
-                        [
-                            InlineKeyboardButton(
-                                "⌯ ᴄʟᴏsᴇ ⌯", callback_data="close_send_photo"
-                            )
-                        ],
-                    ]
-                ),
-            )
-        else:
-            await msg.reply_text(
-                f"<b>» ɴᴏ ʙᴜɢ ᴛᴏ ʀᴇᴩᴏʀᴛ !</b>",
-            )
-
-
-
-
-@app.on_callback_query(filters.regex("close_send_photo"))
-async def close_send_photo(_,  query :CallbackQuery):
-    is_admin = await app.get_chat_member(query.message.chat.id, query.from_user.id)
-    if not is_admin.privileges.can_delete_messages:
-        await query.answer("ʏᴏᴜ ᴅᴏɴ'ᴛ ʜᴀᴠᴇ ʀɪɢʜᴛs ᴛᴏ ᴄʟᴏsᴇ ᴛʜɪs.", show_alert=True)
-    else:
-        await query.message.delete()
-
+# ------------------------------------------------------------------------------- #
