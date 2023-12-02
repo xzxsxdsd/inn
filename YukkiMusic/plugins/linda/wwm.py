@@ -11,7 +11,7 @@ from pyrogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineK
 # ------------------------------------------------------------------------------- #
 
 
-@app.on_message(filters.command("pin") & admin_filter)
+@app.on_message(filters.command("pin"))
 async def pin(_, message):
     replied = message.reply_to_message
     chat_title = message.chat.title
@@ -47,7 +47,7 @@ async def pinned(_, message):
 
 # ------------------------------------------------------------------------------- #
 
-@app.on_message(filters.command("unpin") & admin_filter)
+@app.on_message(filters.command("unpin"))
 async def unpin(_, message):
     replied = message.reply_to_message
     chat_title = message.chat.title
@@ -73,7 +73,7 @@ async def unpin(_, message):
 
 # --------------------------------------------------------------------------------- #
 
-@app.on_message(filters.command("removephoto") & admin_filter)
+@app.on_message(filters.command("removephoto"))
 async def deletechatphoto(_, message):
       
       chat_id = message.chat.id
@@ -92,7 +92,7 @@ async def deletechatphoto(_, message):
 
 # --------------------------------------------------------------------------------- #
 
-@app.on_message(filters.command("setphoto")& admin_filter)
+@app.on_message(filters.command("setphoto"))
 async def setchatphoto(_, message):
       reply = message.reply_to_message
       chat_id = message.chat.id
@@ -118,7 +118,7 @@ async def setchatphoto(_, message):
 
 # --------------------------------------------------------------------------------- #
 
-@app.on_message(filters.command("settitle")& admin_filter)
+@app.on_message(filters.command("settitle"))
 async def setgrouptitle(_, message):
     reply = message.reply_to_message
     chat_id = message.chat.id
@@ -154,7 +154,7 @@ async def setgrouptitle(_, message):
 
 
 
-@app.on_message(filters.command("setdiscription") & admin_filter)
+@app.on_message(filters.command("setdiscription"))
 async def setg_discription(_, message):
     reply = message.reply_to_message
     chat_id = message.chat.id
