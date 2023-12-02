@@ -2,7 +2,6 @@ import base64
 import httpx
 import os
 from pyrogram import filters
-from config import BOT_USERNAME
 from YukkiMusic import app
 from pyrogram import filters
 import pyrogram
