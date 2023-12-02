@@ -1,144 +1,117 @@
+import base64
+import httpx
 import os
-import asyncio
-from pyrogram import Client, filters
-from pyrogram.types import Message
-from pyrogram import enums
-from pyrogram.enums import ChatMemberStatus
-from pyrogram.errors import FloodWait
+from pyrogram import filters
+from config import BOT_USERNAME
 from YukkiMusic import app
+from pyrogram import filters
+import pyrogram
+from uuid import uuid4
+from pyrogram.types import InlineKeyboardButton,InlineKeyboardMarkup
 
-# ------------------------------------------------------------------------------- #
 
-chatQueue = []
-
-stopProcess = False
-
-# ------------------------------------------------------------------------------- #
-
-@app.on_message(filters.command(["zombies","clean"]))
-async def remove(client, message):
-  global stopProcess
-  try: 
+@app.on_message(filters.reply & filters.command("upscale"))
+async def upscale_image(client, message):
     try:
-      sender = await app.get_chat_member(message.chat.id, message.from_user.id)
-      has_permissions = sender.privileges
-    except:
-      has_permissions = message.sender_chat  
-    if has_permissions:
-      bot = await app.get_chat_member(message.chat.id, "self")
-      if bot.status == ChatMemberStatus.MEMBER:
-        await message.reply("➠ | ɪ ɴᴇᴇᴅ ᴀᴅᴍɪɴ ᴘᴇʀᴍɪssɪᴏɴs ᴛᴏ ʀᴇᴍᴏᴠᴇ ᴅᴇʟᴇᴛᴇᴅ ᴀᴄᴄᴏᴜɴᴛs.")  
-      else:  
-        if len(chatQueue) > 30 :
-          await message.reply("➠ | ɪ'ᴍ ᴀʟʀᴇᴀᴅʏ ᴡᴏʀᴋɪɴɢ ᴏɴ ᴍʏ ᴍᴀxɪᴍᴜᴍ ɴᴜᴍʙᴇʀ ᴏғ 30 ᴄʜᴀᴛs ᴀᴛ ᴛʜᴇ ᴍᴏᴍᴇɴᴛ. ᴘʟᴇᴀsᴇ ᴛʀʏ ᴀɢᴀɪɴ sʜᴏʀᴛʟʏ.")
-        else:  
-          if message.chat.id in chatQueue:
-            await message.reply("➠ | ᴛʜᴇʀᴇ's ᴀʟʀᴇᴀᴅʏ ᴀɴ ᴏɴɢɪɪɴɢ ᴘʀᴏᴄᴇss ɪɴ ᴛʜɪs ᴄʜᴀᴛ. ᴘʟᴇᴀsᴇ [ /stop ] ᴛᴏ sᴛᴀʀᴛ ᴀ ɴᴇᴡ ᴏɴᴇ.")
-          else:  
-            chatQueue.append(message.chat.id)  
-            deletedList = []
-            async for member in app.get_chat_members(message.chat.id):
-              if member.user.is_deleted == True:
-                deletedList.append(member.user)
-              else:
-                pass
-            lenDeletedList = len(deletedList)  
-            if lenDeletedList == 0:
-              await message.reply("⟳ | ɴᴏ ᴅᴇʟᴇᴛᴇᴅ ᴀᴄᴄᴏᴜɴᴛs ɪɴ ᴛʜɪs ᴄʜᴀᴛ.")
-              chatQueue.remove(message.chat.id)
-            else:
-              k = 0
-              processTime = lenDeletedList*1
-              temp = await app.send_message(message.chat.id, f"🧭 | ᴛᴏᴛᴀʟ ᴏғ {lenDeletedList} ᴅᴇʟᴇᴛᴇᴅ ᴀᴄᴄᴏᴜɴᴛs ʜᴀs ʙᴇᴇɴ ᴅᴇᴛᴇᴄᴛᴇᴅ.\n🥀 | ᴇsᴛɪᴍᴀᴛᴇᴅ ᴛɪᴍᴇ: {processTime} sᴇᴄᴏɴᴅs ғʀᴏᴍ ɴᴏᴡ.")
-              if stopProcess: stopProcess = False
-              while len(deletedList) > 0 and not stopProcess:   
-                deletedAccount = deletedList.pop(0)
-                try:
-                  await app.ban_chat_member(message.chat.id, deletedAccount.id)
-                except Exception:
-                  pass  
-                k+=1
-                await asyncio.sleep(10)
-              if k == lenDeletedList:  
-                await message.reply(f"✅ | sᴜᴄᴄᴇssғᴜʟʟʏ ʀᴇᴍᴏᴠᴇᴅ ᴀʟʟ ᴅᴇʟᴇᴛᴇᴅ ᴀᴄᴄɪᴜɴᴛs ғʀᴏᴍ ᴛʜɪs ᴄʜᴀᴛ.")  
-                await temp.delete()
-              else:
-                await message.reply(f"✅ | sᴜᴄᴄᴇssғᴜʟʟʏ ʀᴇᴍᴏᴠᴇᴅ {k} ᴅᴇʟᴇᴛᴇᴅ ᴀᴄᴄᴏᴜɴᴛs ғʀᴏᴍ ᴛʜɪs ᴄʜᴀᴛ.")  
-                await temp.delete()  
-              chatQueue.remove(message.chat.id)
-    else:
-      await message.reply("👮🏻 | sᴏʀʀʏ, **ᴏɴʟʏ ᴀᴅᴍɪɴ** ᴄᴀɴ ᴇxᴇᴄᴜᴛᴇ ᴛʜɪs ᴄᴏᴍᴍᴀɴᴅ.")  
-  except FloodWait as e:
-    await asyncio.sleep(e.value)                               
-        
+        if not message.reply_to_message or not message.reply_to_message.photo:
+            await message.reply_text("**ᴘʟᴇᴀsᴇ ʀᴇᴘʟʏ ᴛᴏ ᴀɴ ɪᴍᴀɢᴇ ᴛᴏ ᴜᴘsᴄᴀʟᴇ ɪᴛ.**")
+            return
 
-# ------------------------------------------------------------------------------- #
+        image = message.reply_to_message.photo.file_id
+        file_path = await client.download_media(image)
 
-@app.on_message(filters.command(["admins","staff"]))
-async def admins(client, message):
-  try: 
-    adminList = []
-    ownerList = []
-    async for admin in app.get_chat_members(message.chat.id, filter=enums.ChatMembersFilter.ADMINISTRATORS):
-      if admin.privileges.is_anonymous == False:
-        if admin.user.is_bot == True:
-          pass
-        elif admin.status == ChatMemberStatus.OWNER:
-          ownerList.append(admin.user)
-        else:  
-          adminList.append(admin.user)
-      else:
-        pass   
-    lenAdminList= len(ownerList) + len(adminList)  
-    text2 = f"**ɢʀᴏᴜᴘ sᴛᴀғғ - {message.chat.title}**\n\n"
-    try:
-      owner = ownerList[0]
-      if owner.username == None:
-        text2 += f"👑 ᴏᴡɴᴇʀ\n└ {owner.mention}\n\n👮🏻 ᴀᴅᴍɪɴs\n"
-      else:
-        text2 += f"👑 ᴏᴡɴᴇʀ\n└ @{owner.username}\n\n👮🏻 ᴀᴅᴍɪɴs\n"
-    except:
-      text2 += f"👑 ᴏᴡɴᴇʀ\n└ <i>Hidden</i>\n\n👮🏻 ᴀᴅᴍɪɴs\n"
-    if len(adminList) == 0:
-      text2 += "└ <i>ᴀᴅᴍɪɴs ᴀʀᴇ ʜɪᴅᴅᴇɴ</i>"  
-      await app.send_message(message.chat.id, text2)   
-    else:  
-      while len(adminList) > 1:
-        admin = adminList.pop(0)
-        if admin.username == None:
-          text2 += f"├ {admin.mention}\n"
-        else:
-          text2 += f"├ @{admin.username}\n"    
-      else:    
-        admin = adminList.pop(0)
-        if admin.username == None:
-          text2 += f"└ {admin.mention}\n\n"
-        else:
-          text2 += f"└ @{admin.username}\n\n"
-      text2 += f"✅ | **ᴛᴏᴛᴀʟ ɴᴜᴍʙᴇʀ ᴏғ ᴀᴅᴍɪɴs**: {lenAdminList}"  
-      await app.send_message(message.chat.id, text2)           
-  except FloodWait as e:
-    await asyncio.sleep(e.value)       
+        with open(file_path, "rb") as image_file:
+            f = image_file.read()
 
-# ------------------------------------------------------------------------------- #
+        b = base64.b64encode(f).decode("utf-8")
 
-@app.on_message(filters.command("bots"))
-async def bots(client, message):  
-  try:    
-    botList = []
-    async for bot in app.get_chat_members(message.chat.id, filter=enums.ChatMembersFilter.BOTS):
-      botList.append(bot.user)
-    lenBotList = len(botList) 
-    text3  = f"**ʙᴏᴛ ʟɪsᴛ - {message.chat.title}**\n\n🤖 ʙᴏᴛs\n"
-    while len(botList) > 1:
-      bot = botList.pop(0)
-      text3 += f"├ @{bot.username}\n"    
-    else:    
-      bot = botList.pop(0)
-      text3 += f"└ @{bot.username}\n\n"
-      text3 += f"✅ | *ᴛᴏᴛᴀʟ ɴᴜᴍʙᴇʀ ᴏғ ʙᴏᴛs**: {lenBotList}"  
-      await app.send_message(message.chat.id, text3)
-  except FloodWait as e:
-    await asyncio.sleep(e.value)
+        async with httpx.AsyncClient() as http_client:
+            response = await http_client.post(
+                "https://api.qewertyy.me/upscale", data={"image_data": b}, timeout=None
+            )
+
+        with open("upscaled_image.png", "wb") as output_file:
+            output_file.write(response.content)
+
+        await client.send_document(
+            message.chat.id,
+            document="upscaled_image.png",
+            caption="**ʜᴇʀᴇ ɪs ᴛʜᴇ ᴜᴘsᴄᴀʟᴇᴅ ɪᴍᴀɢᴇ!**",
+        )
+
+    except Exception as e:
+        print(f"**ғᴀɪʟᴇᴅ ᴛᴏ ᴜᴘsᴄᴀʟᴇ ᴛʜᴇ ɪᴍᴀɢᴇ**: {e}")
+        await message.reply_text("**ғᴀɪʟᴇᴅ ᴛᴏ ᴜᴘsᴄᴀʟᴇ ᴛʜᴇ ɪᴍᴀɢᴇ. ᴘʟᴇᴀsᴇ ᴛʀʏ ᴀɢᴀɪɴ ʟᴀᴛᴇʀ**.")
+
+######### sticker id
+
+@app.on_message(filters.command("packkang"))
+async def _packkang(app :app,message):  
+    txt = await message.reply_text("**ᴘʀᴏᴄᴇssɪɴɢ....**")
+    if not message.reply_to_message:
+        await txt.edit('ʀᴇᴘʟʏ ᴛᴏ ᴍᴇssᴀɢᴇ')
+        return
+    if not message.reply_to_message.sticker:
+        await txt.edit('ʀᴇᴘʟʏ ᴛᴏ sᴛɪᴄᴋᴇʀ')
+        return
+    if message.reply_to_message.sticker.is_animated or  message.reply_to_message.sticker.is_video:
+        return await txt.edit("ʀᴇᴘʟʏ ᴛᴏ ᴀ ɴᴏɴ-ᴀɴɪᴍᴀᴛᴇᴅ sᴛɪᴄᴋᴇʀ")
+    if len(message.command) < 2:
+        pack_name =  f'{message.from_user.first_name}_sticker_pack_by_@Yumikoobot'
+    else :
+        pack_name = message.text.split(maxsplit=1)[1]
+    short_name = message.reply_to_message.sticker.set_name
+    stickers = await app.invoke(
+        pyrogram.raw.functions.messages.GetStickerSet(
+            stickerset=pyrogram.raw.types.InputStickerSetShortName(
+                short_name=short_name),
+            hash=0))
+    shits = stickers.documents
+    sticks = []
     
-# ------------------------------------------------------------------------------- #
+    for i in shits:
+        sex = pyrogram.raw.types.InputDocument(
+                id=i.id,
+                access_hash=i.access_hash,
+                file_reference=i.thumbs[0].bytes
+            )
+        
+        sticks.append(
+            pyrogram.raw.types.InputStickerSetItem(
+                document=sex,
+                emoji=i.attributes[1].alt
+            )
+        )
+
+    try:
+        short_name = f'stikcer_pack_{str(uuid4()).replace("-","")}_by_{app.me.username}'
+        user_id = await app.resolve_peer(message.from_user.id)
+        await app.invoke(
+            pyrogram.raw.functions.stickers.CreateStickerSet(
+                user_id=user_id,
+                title=pack_name,
+                short_name=short_name,
+                stickers=sticks,
+            )
+        )
+        await txt.edit(f"**ʜᴇʀᴇ ɪs ʏᴏᴜʀ ᴋᴀɴɢᴇᴅ ʟɪɴᴋ**!\n**ᴛᴏᴛᴀʟ sᴛɪᴄᴋᴇʀ **: {len(sticks)}",reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("ᴘᴀᴄᴋ ʟɪɴᴋ",url=f"http://t.me/addstickers/{short_name}")]]))
+    except Exception as e:
+        await message.reply(str(e))
+
+
+###### sticker id =
+@app.on_message(filters.command(["stickerid","stid"]))
+async def sticker_id(app: app, msg):
+    if not msg.reply_to_message:
+        await msg.reply_text("Reply to a sticker")        
+    elif not msg.reply_to_message.sticker:
+        await msg.reply_text("Reply to a sticker")        
+    st_in = msg.reply_to_message.sticker
+    await msg.reply_text(f"""
+⊹ <u>**sᴛɪᴄᴋᴇʀ ɪɴғᴏ**</u> ⊹
+**⊚ sᴛɪᴄᴋᴇʀ ɪᴅ **: `{st_in.file_id}`\n
+**⊚ sᴛɪᴄᴋᴇʀ ᴜɴɪǫᴜᴇ ɪᴅ **: `{st_in.file_unique_id}`
+""")
+
+
+#####
