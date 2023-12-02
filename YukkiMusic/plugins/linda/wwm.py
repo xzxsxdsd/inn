@@ -1,6 +1,6 @@
 from traceback import format_exc
 from pyrogram.types import Message, InlineKeyboardButton, InlineKeyboardMarkup
-from search_engine_parser.core.exceptions import NoResultsFound, NoResultsOrTrafficError
+
 from YukkiMusic import app
 from pyrogram import filters
 
