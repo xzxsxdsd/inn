@@ -1,116 +1,199 @@
-import base64
-import httpx
-import os
-from pyrogram import filters
+from pyrogram import enums
+from pyrogram.enums import ChatType
+from pyrogram import filters, Client
 from YukkiMusic import app
-from pyrogram import filters
-import pyrogram
-from uuid import uuid4
-from pyrogram.types import InlineKeyboardButton,InlineKeyboardMarkup
+from config import OWNER_ID
+from pyrogram.types import Message
+from YukkiMusic.utils.daxx_ban import admin_filter
+from pyrogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
 
 
-@app.on_message(filters.reply & filters.command("upscale"))
-async def upscale_image(client, message):
-    try:
-        if not message.reply_to_message or not message.reply_to_message.photo:
-            await message.reply_text("**ᴘʟᴇᴀsᴇ ʀᴇᴘʟʏ ᴛᴏ ᴀɴ ɪᴍᴀɢᴇ ᴛᴏ ᴜᴘsᴄᴀʟᴇ ɪᴛ.**")
-            return
 
-        image = message.reply_to_message.photo.file_id
-        file_path = await client.download_media(image)
+# ------------------------------------------------------------------------------- #
 
-        with open(file_path, "rb") as image_file:
-            f = image_file.read()
 
-        b = base64.b64encode(f).decode("utf-8")
-
-        async with httpx.AsyncClient() as http_client:
-            response = await http_client.post(
-                "https://api.qewertyy.me/upscale", data={"image_data": b}, timeout=None
-            )
-
-        with open("upscaled_image.png", "wb") as output_file:
-            output_file.write(response.content)
-
-        await client.send_document(
-            message.chat.id,
-            document="upscaled_image.png",
-            caption="**ʜᴇʀᴇ ɪs ᴛʜᴇ ᴜᴘsᴄᴀʟᴇᴅ ɪᴍᴀɢᴇ!**",
-        )
-
-    except Exception as e:
-        print(f"**ғᴀɪʟᴇᴅ ᴛᴏ ᴜᴘsᴄᴀʟᴇ ᴛʜᴇ ɪᴍᴀɢᴇ**: {e}")
-        await message.reply_text("**ғᴀɪʟᴇᴅ ᴛᴏ ᴜᴘsᴄᴀʟᴇ ᴛʜᴇ ɪᴍᴀɢᴇ. ᴘʟᴇᴀsᴇ ᴛʀʏ ᴀɢᴀɪɴ ʟᴀᴛᴇʀ**.")
-
-######### sticker id
-
-@app.on_message(filters.command("packkang"))
-async def _packkang(app :app,message):  
-    txt = await message.reply_text("**ᴘʀᴏᴄᴇssɪɴɢ....**")
-    if not message.reply_to_message:
-        await txt.edit('ʀᴇᴘʟʏ ᴛᴏ ᴍᴇssᴀɢᴇ')
-        return
-    if not message.reply_to_message.sticker:
-        await txt.edit('ʀᴇᴘʟʏ ᴛᴏ sᴛɪᴄᴋᴇʀ')
-        return
-    if message.reply_to_message.sticker.is_animated or  message.reply_to_message.sticker.is_video:
-        return await txt.edit("ʀᴇᴘʟʏ ᴛᴏ ᴀ ɴᴏɴ-ᴀɴɪᴍᴀᴛᴇᴅ sᴛɪᴄᴋᴇʀ")
-    if len(message.command) < 2:
-        pack_name =  f'{message.from_user.first_name}_sticker_pack_by_@Yumikoobot'
-    else :
-        pack_name = message.text.split(maxsplit=1)[1]
-    short_name = message.reply_to_message.sticker.set_name
-    stickers = await app.invoke(
-        pyrogram.raw.functions.messages.GetStickerSet(
-            stickerset=pyrogram.raw.types.InputStickerSetShortName(
-                short_name=short_name),
-            hash=0))
-    shits = stickers.documents
-    sticks = []
+@app.on_message(filters.command("pin") & admin_filter)
+async def pin(_, message):
+    replied = message.reply_to_message
+    chat_title = message.chat.title
+    chat_id = message.chat.id
+    user_id = message.from_user.id
+    name = message.from_user.mention
     
-    for i in shits:
-        sex = pyrogram.raw.types.InputDocument(
-                id=i.id,
-                access_hash=i.access_hash,
-                file_reference=i.thumbs[0].bytes
-            )
-        
-        sticks.append(
-            pyrogram.raw.types.InputStickerSetItem(
-                document=sex,
-                emoji=i.attributes[1].alt
-            )
-        )
-
-    try:
-        short_name = f'stikcer_pack_{str(uuid4()).replace("-","")}_by_{app.me.username}'
-        user_id = await app.resolve_peer(message.from_user.id)
-        await app.invoke(
-            pyrogram.raw.functions.stickers.CreateStickerSet(
-                user_id=user_id,
-                title=pack_name,
-                short_name=short_name,
-                stickers=sticks,
-            )
-        )
-        await txt.edit(f"**ʜᴇʀᴇ ɪs ʏᴏᴜʀ ᴋᴀɴɢᴇᴅ ʟɪɴᴋ**!\n**ᴛᴏᴛᴀʟ sᴛɪᴄᴋᴇʀ **: {len(sticks)}",reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("ᴘᴀᴄᴋ ʟɪɴᴋ",url=f"http://t.me/addstickers/{short_name}")]]))
-    except Exception as e:
-        await message.reply(str(e))
+    if message.chat.type == enums.ChatType.PRIVATE:
+        await message.reply_text("**ᴛʜɪs ᴄᴏᴍᴍᴀɴᴅ ᴡᴏʀᴋs ᴏɴʟʏ ᴏɴ ɢʀᴏᴜᴘs !**")
+    elif not replied:
+        await message.reply_text("**ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴍᴇssᴀɢᴇ ᴛᴏ ᴘɪɴ ɪᴛ !**")
+    else:
+        user_stats = await app.get_chat_member(chat_id, user_id)
+        if user_stats.privileges.can_pin_messages and message.reply_to_message:
+            try:
+                await message.reply_to_message.pin()
+                await message.reply_text(f"**sᴜᴄᴄᴇssғᴜʟʟʏ ᴘɪɴɴᴇᴅ ᴍᴇssᴀɢᴇ!**\n\n**ᴄʜᴀᴛ:** {chat_title}\n**ᴀᴅᴍɪɴ:** {name}", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(" 📝 ᴠɪᴇᴡs ᴍᴇssᴀɢᴇ ", url=replied.link)]]))
+            except Exception as e:
+                await message.reply_text(str(e))
 
 
-###### sticker id =
-@app.on_message(filters.command(["stickerid","stid"]))
-async def sticker_id(app: app, msg):
-    if not msg.reply_to_message:
-        await msg.reply_text("Reply to a sticker")        
-    elif not msg.reply_to_message.sticker:
-        await msg.reply_text("Reply to a sticker")        
-    st_in = msg.reply_to_message.sticker
-    await msg.reply_text(f"""
-⊹ <u>**sᴛɪᴄᴋᴇʀ ɪɴғᴏ**</u> ⊹
-**⊚ sᴛɪᴄᴋᴇʀ ɪᴅ **: `{st_in.file_id}`\n
-**⊚ sᴛɪᴄᴋᴇʀ ᴜɴɪǫᴜᴇ ɪᴅ **: `{st_in.file_unique_id}`
-""")
+@app.on_message(filters.command("pinned"))
+async def pinned(_, message):
+    chat = await app.get_chat(message.chat.id)
+    if not chat.pinned_message:
+        return await message.reply_text("**ɴᴏ ᴘɪɴɴᴇᴅ ᴍᴇssᴀɢᴇ ғᴏᴜɴᴅ**")
+    try:        
+        await message.reply_text("ʜᴇʀᴇ ɪs ᴛʜᴇ ʟᴀᴛᴇsᴛ ᴘɪɴɴᴇᴅ ᴍᴇssᴀɢᴇ",reply_markup=
+        InlineKeyboardMarkup([[InlineKeyboardButton(text="📝 ᴠɪᴇᴡ ᴍᴇssᴀɢᴇ",url=chat.pinned_message.link)]]))  
+    except Exception as er:
+        await message.reply_text(er)
 
 
-#####
+# ------------------------------------------------------------------------------- #
+
+@app.on_message(filters.command("unpin") & admin_filter)
+async def unpin(_, message):
+    replied = message.reply_to_message
+    chat_title = message.chat.title
+    chat_id = message.chat.id
+    user_id = message.from_user.id
+    name = message.from_user.mention
+    
+    if message.chat.type == enums.ChatType.PRIVATE:
+        await message.reply_text("**ᴛʜɪs ᴄᴏᴍᴍᴀɴᴅ ᴡᴏʀᴋs ᴏɴʟʏ ᴏɴ ɢʀᴏᴜᴘs !**")
+    elif not replied:
+        await message.reply_text("**ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴍᴇssᴀɢᴇ ᴛᴏ ᴜɴᴘɪɴ ɪᴛ !**")
+    else:
+        user_stats = await app.get_chat_member(chat_id, user_id)
+        if user_stats.privileges.can_pin_messages and message.reply_to_message:
+            try:
+                await message.reply_to_message.unpin()
+                await message.reply_text(f"**sᴜᴄᴄᴇssғᴜʟʟʏ ᴜɴᴘɪɴɴᴇᴅ ᴍᴇssᴀɢᴇ!**\n\n**ᴄʜᴀᴛ:** {chat_title}\n**ᴀᴅᴍɪɴ:** {name}", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(" 📝 ᴠɪᴇᴡs ᴍᴇssᴀɢᴇ ", url=replied.link)]]))
+            except Exception as e:
+                await message.reply_text(str(e))
+
+
+
+
+# --------------------------------------------------------------------------------- #
+
+@app.on_message(filters.command("removephoto") & admin_filter)
+async def deletechatphoto(_, message):
+      
+      chat_id = message.chat.id
+      user_id = message.from_user.id
+      msg = await message.reply_text("**ᴘʀᴏᴄᴇssɪɴɢ....**")
+      admin_check = await app.get_chat_member(chat_id, user_id)
+      if message.chat.type == enums.ChatType.PRIVATE:
+           await msg.edit("**ᴛʜɪs ᴄᴏᴍᴍᴀɴᴅ ᴡᴏʀᴋ ᴏɴ ɢʀᴏᴜᴘs !**") 
+      try:
+         if admin_check.privileges.can_change_info:
+             await app.delete_chat_photo(chat_id)
+             await msg.edit("**sᴜᴄᴄᴇssғᴜʟʟʏ ʀᴇᴍᴏᴠᴇᴅ ᴘʀᴏғɪʟᴇ ᴘʜᴏᴛᴏ ғʀᴏᴍ ɢʀᴏᴜᴘ !\nʙʏ** {}".format(message.from_user.mention))    
+      except:
+          await msg.edit("**ᴛʜᴇ ᴜsᴇʀ ᴍᴏsᴛ ɴᴇᴇᴅ ᴄʜᴀɴɢᴇ ɪɴғᴏ ᴀᴅᴍɪɴ ʀɪɢʜᴛs ᴛᴏ ʀᴇᴍᴏᴠᴇ ɢʀᴏᴜᴘ ᴘʜᴏᴛᴏ !**")
+
+
+# --------------------------------------------------------------------------------- #
+
+@app.on_message(filters.command("setphoto")& admin_filter)
+async def setchatphoto(_, message):
+      reply = message.reply_to_message
+      chat_id = message.chat.id
+      user_id = message.from_user.id
+      msg = await message.reply_text("ᴘʀᴏᴄᴇssɪɴɢ...")
+      admin_check = await app.get_chat_member(chat_id, user_id)
+      if message.chat.type == enums.ChatType.PRIVATE:
+           await msg.edit("`ᴛʜɪs ᴄᴏᴍᴍᴀɴᴅ ᴡᴏʀᴋ ᴏɴ ɢʀᴏᴜᴘs !`") 
+      elif not reply:
+           await msg.edit("**ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴘʜᴏᴛᴏ ᴏʀ ᴅᴏᴄᴜᴍᴇɴᴛ.**")
+      elif reply:
+          try:
+             if admin_check.privileges.can_change_info:
+                photo = await reply.download()
+                await message.chat.set_photo(photo=photo)
+                await msg.edit_text("**sᴜᴄᴄᴇssғᴜʟʟʏ ɴᴇᴡ ᴘʀᴏғɪʟᴇ ᴘʜᴏᴛᴏ ɪɴsᴇʀᴛ !\nʙʏ** {}".format(message.from_user.mention))
+             else:
+                await msg.edit("**sᴏᴍᴇᴛʜɪɴɢ ᴡʀᴏɴɢ ʜᴀᴘᴘᴇɴᴇᴅ ᴛʀʏ ᴀɴᴏᴛʜᴇʀ ᴘʜᴏᴛᴏ !**")
+     
+          except:
+              await msg.edit("**ᴛʜᴇ ᴜsᴇʀ ᴍᴏsᴛ ɴᴇᴇᴅ ᴄʜᴀɴɢᴇ ɪɴғᴏ ᴀᴅᴍɪɴ ʀɪɢʜᴛs ᴛᴏ ᴄʜᴀɴɢᴇ ɢʀᴏᴜᴘ ᴘʜᴏᴛᴏ !**")
+
+
+# --------------------------------------------------------------------------------- #
+
+@app.on_message(filters.command("settitle")& admin_filter)
+async def setgrouptitle(_, message):
+    reply = message.reply_to_message
+    chat_id = message.chat.id
+    user_id = message.from_user.id
+    msg = await message.reply_text("ᴘʀᴏᴄᴇssɪɴɢ...")
+    if message.chat.type == enums.ChatType.PRIVATE:
+          await msg.edit("**ᴛʜɪs ᴄᴏᴍᴍᴀɴᴅ ᴡᴏʀᴋ ᴏɴ ɢʀᴏᴜᴘs !**")
+    elif reply:
+          try:
+            title = message.reply_to_message.text
+            admin_check = await app.get_chat_member(chat_id, user_id)
+            if admin_check.privileges.can_change_info:
+               await message.chat.set_title(title)
+               await msg.edit("**sᴜᴄᴄᴇssғᴜʟʟʏ ɴᴇᴡ ɢʀᴏᴜᴘ ɴᴀᴍᴇ ɪɴsᴇʀᴛ !\nʙʏ** {}".format(message.from_user.mention))
+          except AttributeError:
+                await msg.edit("**ᴛʜᴇ ᴜsᴇʀ ᴍᴏsᴛ ɴᴇᴇᴅ ᴄʜᴀɴɢᴇ ɪɴғᴏ ᴀᴅᴍɪɴ ʀɪɢʜᴛs ᴛᴏ ᴄʜᴀɴɢᴇ ɢʀᴏᴜᴘ ᴛɪᴛʟᴇ !**")   
+    elif len(message.command) >1:
+        try:
+            title = message.text.split(None, 1)[1]
+            admin_check = await app.get_chat_member(chat_id, user_id)
+            if admin_check.privileges.can_change_info:
+               await message.chat.set_title(title)
+               await msg.edit("**sᴜᴄᴄᴇssғᴜʟʟʏ ɴᴇᴡ ɢʀᴏᴜᴘ ɴᴀᴍᴇ ɪɴsᴇʀᴛ !\nʙʏ** {}".format(message.from_user.mention))
+        except AttributeError:
+               await msg.edit("**ᴛʜᴇ ᴜsᴇʀ ᴍᴏsᴛ ɴᴇᴇᴅ ᴄʜᴀɴɢᴇ ɪɴғᴏ ᴀᴅᴍɪɴ ʀɪɢʜᴛs ᴛᴏ ᴄʜᴀɴɢᴇ ɢʀᴏᴜᴘ ᴛɪᴛʟᴇ !**")
+          
+
+    else:
+       await msg.edit("**ʏᴏᴜ ɴᴇᴇᴅ ʀᴇᴘʟʏ ᴛᴏ ᴛᴇxᴛ ᴏʀ ɢɪᴠᴇ sᴏᴍᴇ ᴛᴇxᴛ ᴛᴏ ᴄʜᴀɴɢᴇ ɢʀᴏᴜᴘ ᴛɪᴛʟᴇ **")
+
+
+# --------------------------------------------------------------------------------- #
+
+
+
+@app.on_message(filters.command("setdiscription") & admin_filter)
+async def setg_discription(_, message):
+    reply = message.reply_to_message
+    chat_id = message.chat.id
+    user_id = message.from_user.id
+    msg = await message.reply_text("**ᴘʀᴏᴄᴇssɪɴɢ...**")
+    if message.chat.type == enums.ChatType.PRIVATE:
+        await msg.edit("**ᴛʜɪs ᴄᴏᴍᴍᴀɴᴅ ᴡᴏʀᴋs ᴏɴ ɢʀᴏᴜᴘs!**")
+    elif reply:
+        try:
+            discription = message.reply_to_message.text
+            admin_check = await app.get_chat_member(chat_id, user_id)
+            if admin_check.privileges.can_change_info:
+                await message.chat.set_description(discription)
+                await msg.edit("**sᴜᴄᴄᴇssғᴜʟʟʏ ɴᴇᴡ ɢʀᴏᴜᴘ ᴅɪsᴄʀɪᴘᴛɪᴏɴ ɪɴsᴇʀᴛ!**\nʙʏ {}".format(message.from_user.mention))
+        except AttributeError:
+            await msg.edit("**ᴛʜᴇ ᴜsᴇʀ ᴍᴜsᴛ ʜᴀᴠᴇ ᴄʜᴀɴɢᴇ ɪɴғᴏ ᴀᴅᴍɪɴ ʀɪɢʜᴛs ᴛᴏ ᴄʜᴀɴɢᴇ ɢʀᴏᴜᴘ ᴅɪsᴄʀɪᴘᴛɪᴏɴ!**")   
+    elif len(message.command) > 1:
+        try:
+            discription = message.text.split(None, 1)[1]
+            admin_check = await app.get_chat_member(chat_id, user_id)
+            if admin_check.privileges.can_change_info:
+                await message.chat.set_description(discription)
+                await msg.edit("**sᴜᴄᴄᴇssғᴜʟʟʏ ɴᴇᴡ ɢʀᴏᴜᴘ ᴅɪsᴄʀɪᴘᴛɪᴏɴ ɪɴsᴇʀᴛ!**\nʙʏ {}".format(message.from_user.mention))
+        except AttributeError:
+            await msg.edit("**ᴛʜᴇ ᴜsᴇʀ ᴍᴜsᴛ ʜᴀᴠᴇ ᴄʜᴀɴɢᴇ ɪɴғᴏ ᴀᴅᴍɪɴ ʀɪɢʜᴛs ᴛᴏ ᴄʜᴀɴɢᴇ ɢʀᴏᴜᴘ ᴅɪsᴄʀɪᴘᴛɪᴏɴ!**")
+    else:
+        await msg.edit("**ʏᴏᴜ ɴᴇᴇᴅ ᴛᴏ ʀᴇᴘʟʏ ᴛᴏ ᴛᴇxᴛ ᴏʀ ɢɪᴠᴇ sᴏᴍᴇ ᴛᴇxᴛ ᴛᴏ ᴄʜᴀɴɢᴇ ɢʀᴏᴜᴘ ᴅɪsᴄʀɪᴘᴛᴏɴ!**")
+
+
+# --------------------------------------------------------------------------------- #
+
+@app.on_message(filters.command("lg")& filters.user(OWNER_ID))
+async def bot_leave(_, message):
+    chat_id = message.chat.id
+    text = "**sᴜᴄᴄᴇssғᴜʟʟʏ ʜɪʀᴏ !!.**"
+    await message.reply_text(text)
+    await app.leave_chat(chat_id=chat_id, delete=True)
+
+
+# --------------------------------------------------------------------------------- #
+
