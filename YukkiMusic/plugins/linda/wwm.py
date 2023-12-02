@@ -1,6 +1,5 @@
 from pyrogram import Client, filters
 from datetime import datetime
-import pytz
 from YukkiMusic import app
 
 
